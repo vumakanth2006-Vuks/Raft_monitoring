@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Water Monitor</title>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #eef5f8;
+            --surface: #ffffff;
+            --surface-soft: #f7fbfc;
+            --border: #dce8ed;
+            --text: #18323d;
+            --muted: #70858e;
+            --primary: #087f8c;
+            --primary-dark: #075d69;
+            --safe: #16845b;
+            --safe-bg: #e9f8f1;
+            --danger: #d84d4d;
+            --danger-bg: #fff0f0;
+            --shadow: 0 8px 28px rgba(26, 67, 79, 0.08);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background:
+                linear-gradient(180deg, #e8f4f7 0%, var(--bg) 260px);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .app {
+            width: min(1380px, calc(100% - 40px));
+            margin: auto;
+            padding: 28px 0 32px;
+        }
+
+        /* HEADER */
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #087f8c, #20a8b5);
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 7px 18px rgba(8, 127, 140, 0.20);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 5px;
+            letter-spacing: 0.7px;
+        }
+
+        .status-online {
+            background: var(--safe-bg);
+            color: var(--safe);
+            border: 1px solid #ccebdd;
+            padding: 9px 14px;
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* MAIN GRID */
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 0.85fr 1.55fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .left-column,
+        .right-column {
+            min-width: 0;
+        }
+
+        /* CARDS */
+
+        .status-card,
+        .card,
+        .gps-card,
+        .map-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .status-card {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 9px;
+        }
+
+        .safe {
+            color: var(--safe);
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .unsafe {
+            color: var(--danger);
+        }
+
+        .status-text {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 7px;
+            line-height: 1.5;
+        }
+
+        /* SENSOR CARDS */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .card {
+            padding: 20px;
+            min-height: 125px;
+        }
+
+        .value {
+            font-size: 29px;
+            font-weight: 800;
+            margin-top: 12px;
+        }
+
+        .unit {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: normal;
+        }
+
+        /* GPS */
+
+        .gps-card {
+            padding: 20px;
+        }
+
+        .gps-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .coordinate {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #edf2f4;
+            font-size: 13px;
+        }
+
+        .coordinate:last-child {
+            border-bottom: none;
+        }
+
+        .coordinate-name {
+            color: var(--muted);
+        }
+
+        /* MAP */
+
+        .map-card {
+            height: 100%;
+            min-height: 420px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .map-title {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .map-live {
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .map {
+            flex: 1;
+            min-height: 350px;
+            background:
+                linear-gradient(rgba(8, 127, 140, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(8, 127, 140, 0.05) 1px, transparent 1px),
+                #f2f8f9;
+            background-size: 36px 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-placeholder {
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .map-icon {
+            font-size: 38px;
+            margin-bottom: 8px;
+        }
+
+        .map-text {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .map-subtext {
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        /* FOOTER */
+
+        .update {
+            text-align: right;
+            color: var(--muted);
+            font-size: 11px;
+            padding-top: 14px;
+        }
+
+        /* TABLET */
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .map-card {
+                min-height: 360px;
+            }
+
+            .map {
+                min-height: 290px;
+            }
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+            body {
+                background: var(--bg);
+            }
+
+            .app {
+                width: min(100% - 24px, 480px);
+                padding: 16px 0 24px;
+            }
+
+            .header {
+                align-items: flex-start;
+                margin-bottom: 18px;
+            }
+
+            .brand {
+                gap: 10px;
+            }
+
+            .brand-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                font-size: 20px;
+            }
+
+            .title {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                font-size: 10px;
+            }
+
+            .status-online {
+                padding: 7px 9px;
+                font-size: 10px;
+            }
+
+            .dashboard-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .status-card {
+                padding: 18px;
+                margin-bottom: 14px;
+            }
+
+            .safe {
+                font-size: 26px;
+            }
+
+            .grid {
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+
+            .card {
+                padding: 16px;
+                min-height: 112px;
+            }
+
+            .value {
+                font-size: 24px;
+                margin-top: 10px;
+            }
+
+            .gps-card {
+                padding: 17px;
+            }
+
+            .map-card {
+                min-height: 290px;
+            }
+
+            .map {
+                min-height: 220px;
+            }
+
+            .update {
+                text-align: center;
+            }
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="brand">
+            <div class="brand-icon">🌊</div>
+            <div>
+                <div class="title">SMART WATER MONITOR</div>
+                <div class="subtitle">RAFT-01 • LIVE MONITORING SYSTEM</div>
+            </div>
+        </div>
+
+        <div class="status-online" id="deviceStatus">
+            ● ONLINE
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+        <!-- LEFT / INFORMATION -->
+        <div class="left-column">
+
+            <!-- SAFETY STATUS -->
+            <div class="status-card">
+                <div class="label">SAFETY STATUS</div>
+
+                <div class="safe" id="raftStatus">
+                    --
+                </div>
+
+                <div class="status-text" id="statusMessage">
+                    Waiting for data...
+                </div>
+            </div>
+
+            <!-- SENSOR CARDS -->
+            <div class="grid">
+
+                <div class="card">
+                    <div class="label">WATER TEMPERATURE</div>
+                    <div class="value">
+                        <span id="temperature">--</span>
+                        <span class="unit">°C</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="label">DISTANCE</div>
+                    <div class="value">
+                        <span id="distance">--</span>
+                        <span class="unit">m</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- GPS -->
+            <div class="gps-card">
+                <div class="gps-title">📍 GPS LOCATION</div>
+
+                <div class="coordinate">
+                    <span class="coordinate-name">Latitude</span>
+                    <span id="latitude">--</span>
+                </div>
+
+                <div class="coordinate">
+                    <span class="coordinate-name">Longitude</span>
+                    <span id="longitude">--</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT / MAP -->
+        <div class="right-column">
+
+            <div class="map-card">
+
+                <div class="map-header">
+                    <div class="map-title">LIVE GPS MAP</div>
+                    <div class="map-live">● LIVE LOCATION</div>
+                </div>
+
+                <div class="map">
+                    <div class="map-placeholder">
+                        <div class="map-icon">📍</div>
+                        <div class="map-text">Live GPS Map</div>
+                        <div class="map-subtext">
+                            Map will appear here when connected
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- LAST UPDATE -->
+    <div class="update" id="lastUpdate">
+        Waiting for Firebase data...
+    </div>
+
+</div>
+
+
+<!-- FIREBASE -->
+
+<script type="module">
+
+
+    import {
+        initializeApp
+    }
+    from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+
+    import {
+        getDatabase,
+        ref,
+        onValue
+    }
+    from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+
+    /* ==========================
+       FIREBASE CONFIG
+       ========================== */
+
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyDWAwuIdcxf5hUfpAyfhLK3WiJGw4zU-BQ",
+
+        authDomain:
+            "monitoring-6a2d0.firebaseapp.com",
+
+        databaseURL:
+            "https://monitoring-6a2d0-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+        projectId:
+            "monitoring-6a2d0",
+
+        storageBucket:
+            "monitoring-6a2d0.firebasestorage.app",
+
+        messagingSenderId:
+            "45741827113",
+
+        appId:
+            "1:45741827113:web:d82270340426336db22838"
+
+    };
+
+
+    /* ==========================
+       START FIREBASE
+       ========================== */
+
+    const app =
+        initializeApp(firebaseConfig);
+
+
+    const database =
+        getDatabase(app);
+
+
+    /* ==========================
+       READ RAFT DATA
+       ========================== */
+
+    const raftRef =
+        ref(database, "raft01");
+
+
+    onValue(raftRef, (snapshot) => {
+
+
+        const data =
+            snapshot.val();
+
+
+        console.log("Firebase data:", data);
+
+
+        if (!data) {
+
+            document.getElementById("lastUpdate")
+                .textContent =
+                "No raft data found.";
+
+            return;
+
+        }
+
+
+        /* TEMPERATURE */
+
+        document.getElementById("temperature")
+            .textContent =
+            data.temperature ?? "--";
+
+
+        /* DISTANCE */
+
+        document.getElementById("distance")
+            .textContent =
+            data.distance ?? "--";
+
+
+        /* GPS */
+
+        document.getElementById("latitude")
+            .textContent =
+            data.latitude ?? "--";
+
+
+        document.getElementById("longitude")
+            .textContent =
+            data.longitude ?? "--";
+
+
+        /* STATUS */
+
+        const status =
+            String(data.status ?? "UNKNOWN");
+
+
+        const statusElement =
+            document.getElementById("raftStatus");
+
+
+        statusElement.textContent =
+            status.toUpperCase();
+
+
+        if (status.toLowerCase() === "safe") {
+
+            statusElement.className =
+                "safe";
+
+            document.getElementById("statusMessage")
+                .textContent =
+                "Raft is within the defined safe area.";
+
+        }
+
+        else {
+
+            statusElement.className =
+                "safe unsafe";
+
+            document.getElementById("statusMessage")
+                .textContent =
+                "Raft is outside the safe area.";
+
+        }
+
+
+        /* DEVICE STATUS */
+
+        if (data.status === "offline") {
+
+            document.getElementById("deviceStatus")
+                .textContent =
+                "● OFFLINE";
+
+        }
+
+        else {
+
+            document.getElementById("deviceStatus")
+                .textContent =
+                "● ONLINE";
+
+        }
+
+
+        /* TIMESTAMP */
+
+        if (data.timestamp) {
+
+            const time =
+                new Date(data.timestamp);
+
+
+            document.getElementById("lastUpdate")
+                .textContent =
+                "Last updated: " +
+                time.toLocaleString();
+
+        }
+
+        else {
+
+            document.getElementById("lastUpdate")
+                .textContent =
+                "Live data received";
+
+        }
+
+    });
+
+
+</script>
+
+
+</body>
+
+</html>
